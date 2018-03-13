@@ -1,7 +1,7 @@
 # dabbington-backend
 Backend for Yelp Data visualization application.
 
-##Setup
+## Setup
 Steps below are from the [official Flask documentation](http://flask.pocoo.org/docs/0.12/installation/). 
 Setting up a virtual environment is recommended. What I think it does is allow for backwards compatibility since
 Flask may not work with Python 3, but regardless you might as well do it. It's 2 lines.
