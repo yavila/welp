@@ -25,7 +25,7 @@ After activating the virtual environment (or not setting it up at all, like I di
 `sudo easy_install pip`, if you do not already have pip (you usually should).
 
 `pip install -r requirements.txt`
-
-You should be good to go!
-
 NOTE: when adding new packages, run `pip freeze > requirements.txt` after to add to requirements.
+
+To run the server, run `python app.py` and go to `localhost:5000` in your browser.
+
