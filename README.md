@@ -3,8 +3,8 @@ Backend for Yelp Data visualization application.
 
 ## Setup
 Steps below are from the [official Flask documentation](http://flask.pocoo.org/docs/0.12/installation/). 
-Setting up a virtual environment is recommended. What I think it does is allow for backwards compatibility since
-Flask may not work with Python 3, but regardless you might as well do it. It's 2 lines.
+Setting up a virtual environment and using the requirements.txt is highly recommended. This prevents package confusion that frequently occurs with global packages
+and will make it much easier to debug problems with pip on your computer.
 
 `virtualenv venv`
 
@@ -16,8 +16,10 @@ To deactivate the virtual environment:
 
 After activating the virtual environment (or not setting it up at all, like I did), run the following commands:
 
-`sudo easy_install pip`
+`sudo easy_install pip`, if you do not already have pip (you usually should).
 
-`pip install Flask`
+`pip install -r requirements.txt`
 
 You should be good to go!
+
+NOTE: when adding new packages, run `pip freeze > requirements.txt` after to add to requirements.
