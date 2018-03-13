@@ -7,6 +7,7 @@ Setting up a virtual environment is recommended. What I think it does is allow f
 Flask may not work with Python 3, but regardless you might as well do it. It's 2 lines.
 
 `virtualenv venv`
+
 `. venv/bin/activate`
 
 To deactivate the virtual environment:
