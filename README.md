@@ -34,9 +34,19 @@ To run the server, run `python app.py` and go to `localhost:5000` in your browse
 ### MySQL
 For Mac users:
 `brew install mysql`
+`brew services start mysql`
 
 For Windows users, taken from the [MySQL site](https://dev.mysql.com/doc/refman/5.7/en/windows-installation.html):
 1. Download the [MySQL Installer](http://dev.mysql.com/downloads/installer/) and execute it.
 2. Choose "Developer Default" as your Setup Type.
 3. Follow the instructions and complete the installation.
+
+The next instructions are for setting up the database and user account. If you are on Windows, the steps could be done through MySQL workbench (without running any commands). If you are on Mac, simply run the commands.
+
+Set password for root account, `mysqladmin -u root password 'poloisbae'`
+
+Connect to MySQL using username `root` and password `poloisbae`, `mysql -uroot -ppoloisbae`
+
+Once connected to MySQL, create a database with the name "db" `create database db;`
+
 
