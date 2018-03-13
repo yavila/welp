@@ -12,7 +12,8 @@ On OS X, do the following
 
 `. venv/bin/activate`
 
-If you are a windows user, 
+If you are a windows user,
+
 `venv\Scripts\activate`
 
 To deactivate the virtual environment:
