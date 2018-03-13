@@ -2,13 +2,18 @@
 Backend for Yelp Data visualization application.
 
 ## Setup
-Steps below are from the [official Flask documentation](http://flask.pocoo.org/docs/0.12/installation/). 
+Steps below are from the [official Flask documentation](http://flask.pocoo.org/docs/0.12/installation/).
 Setting up a virtual environment and using the requirements.txt is highly recommended. This prevents package confusion that frequently occurs with global packages
 and will make it much easier to debug problems with pip on your computer.
 
 `virtualenv venv`
 
+On OS X, do the following
+
 `. venv/bin/activate`
+
+If you are a windows user, 
+`venv\Scripts\activate`
 
 To deactivate the virtual environment:
 
