@@ -26,9 +26,7 @@ def recommendation():
 	cur.execute(query)
 	data = cur.fetchall()
 	data = map(lambda x: { "id": x[0], "restaurant": x[1] }, data)
-	print(data)
 	return jsonify(data)
-
 
 
 if __name__ == '__main__':
