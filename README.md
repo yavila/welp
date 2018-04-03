@@ -49,4 +49,14 @@ Connect to MySQL using username `root` and password `poloisbae`, `mysql -uroot -
 
 Once connected to MySQL, create a database with the name "db" `create database db;`
 
+To import the data, download the SQL dataset from here: https://www.yelp.com/dataset
+
+Once downloaded use this command to import the data into the database (may take 5-10 min to import):
+`mysql -uroot -ppoloisbae db < yelp_db.sql`
+
+
+
+
+
+
 
