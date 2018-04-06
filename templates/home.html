@@ -1,9 +1,174 @@
 <html>
 <head>
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/d3/4.13.0/d3.min.js"></script>
+  <script src="https://code.jquery.com/jquery-3.3.1.min.js"></script>
+  <style>
+    .links line {
+      stroke: #999;
+      stroke-opacity: 0.6;
+    }
+    
+    .nodes circle {
+      stroke: #fff;
+      stroke-width: 1.5px;
+    }
+  </style>
 </head>
 <body>
-  <div>
-    <h1>Home page</h1>
+  <div id="container">
+    <svg width="960" height="600"></svg>
   </div>
+  <script>
+    const data = {
+      id: "0",
+      restaurant: "Sweet Hut",
+    }
+
+    const graph = {
+      nodes: [
+        data
+      ],
+      links: [],
+    }
+
+    let nodes = [data]
+    let links = []
+
+    const svg = d3.select("svg")
+    const width = +svg.attr("width")
+    const height = +svg.attr("height")
+
+    const simulation = d3.forceSimulation()
+      .force("link", d3.forceLink().id(d => d.id))//.distance(d => 150))
+      .force("charge", d3.forceManyBody())
+      .force("center", d3.forceCenter(width / 2, height / 2))
+
+    const linkGroup = svg.append("g")
+      .attr("class", "links")
+    const nodeGroup = svg.append("g")
+      .attr("class", "nodes")
+    const textGroup = svg.append("g")
+      .attr("class", "texts")
+
+    let linkElements, nodeElements, textElements
+
+    //const g = svg.append("g")
+    //let node = g.append("g").attr("stroke", "#fff").attr("stroke-width", 1.5).selectAll(".node")
+    //let link = g.append("g").attr("stroke", "#000").attr("stroke-width", 1.5).selectAll(".link")
+
+    getNeighbors(0)
+
+    function getNeighbors(sourceId) {
+      const colors = ['#ffffcc','#ffeda0','#fed976','#feb24c','#fd8d3c','#fc4e2a','#e31a1c','#bd0026','#800026']
+      $.get("/recommendation", data => {
+        data.forEach(restaurant => {
+          links.push({ source: sourceId, target: restaurant.id, value: 5 })
+          nodes.push(restaurant)
+        })
+
+        console.log(nodes)
+        console.log(links)
+
+        //redrawGraph()
+        /*console.log(graph)
+        const link = linksContainer.selectAll("line")
+          .data(graph.links)
+          .enter().append("line")
+            .attr("stroke-width", d => 2)
+            .attr("fill", function(d) { return 'blue'; })
+
+        var node = svg.selectAll(".node")
+          .data(graph.nodes)
+        .enter().append("g")
+          .attr("class", "node")
+
+        node.append("circle")
+            .attr("r", 5)
+            .attr("fill", function(d) { return 'blue'; })
+            .on("click", d => getNeighbors(d.id))
+
+        node.append("text")
+          .attr("dx", 5)
+          .attr("dy", 5)
+          .text(function(d) { return d.restaurant; })*/
+        
+        linkElements = linkGroup.selectAll("line").data(links, link => {
+          return link.target.id + link.source.id
+        })
+
+        linkElements.exit().remove()
+
+        const linkEnter = linkElements.enter().append("line")
+          .attr("stroke-width", d => 2)
+          .attr("fill", function(d) { return 'blue'; })
+
+        linkElements = linkEnter.merge(linkElements)
+        
+        nodeElements = nodeGroup.selectAll("circle").data(nodes, node => node.id)
+
+        nodeElements.exit().remove()
+
+        const nodeEnter = nodeElements.enter().append("circle")
+            .attr("r", 5)
+            .attr("fill", function(d) { return 'blue'; })
+            .on("click", d => getNeighbors(d.id))
+
+        nodeElements = nodeEnter.merge(nodeElements)
+
+        simulation
+          .nodes(nodes)
+          .on("tick", ticked);
+
+        simulation.force("link")
+          .links(links)
+
+        simulation.alpha(1).restart()
+        
+      function ticked() {
+        linkElements
+          .attr("x1", function(d) { return d.source.x; })
+          .attr("y1", function(d) { return d.source.y; })
+          .attr("x2", function(d) { return d.target.x; })
+          .attr("y2", function(d) { return d.target.y; });
+        nodeElements.attr('cx', node => node.x).attr('cy', node => node.y)
+      }
+
+      })
+    }
+    /*function redrawGraph() {
+      // Apply the general update pattern to the nodes.
+      node = node.data(graph.nodes, function(d) { return d })
+      node.exit().remove()
+      node = node
+        .enter()
+        .merge(node)
+        .append(g)
+        .attr("class", "node")
+      
+      node.append("circle")
+          .attr("fill", function(d) { return "blue"; })
+          .attr("r", 5)
+
+      node.append("text")
+          .attr("dx", 5)
+          .attr("dy", 5)
+          .text(function(d) { return d.restaurant; })
+      node.on("click", d => getNeighbors(d.id))
+
+      // Apply the general update pattern to the links.
+      if (graph.links) {
+        link = link.data(graph.links, function(d) { return d.source.id + "-" + d.target.id; });
+        link.exit().remove();
+        link = link.enter().append("line").merge(link);
+      }
+
+      // Update and restart the simulation.
+      simulation.nodes(graph.nodes);
+      simulation.force("link").links(graph.links);
+      simulation.alpha(1).restart();
+    }*/
+
+
+  </script>
 </body>
 </html>
