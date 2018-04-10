@@ -54,9 +54,21 @@ To import the data, download the CSV dataset from here: https://www.kaggle.com/y
 Once downloaded use this command to import the data into the database (may take 5-10 min to import):
 `mysql -uroot -ppoloisbae db < yelp_db.sql`
 
+### Recommendation Endpoint
+So far we've only trained on a subset of 100 restaurants.
 
+Import the table business_cosine with mappings from business id to cosine vectors using:
+`mysql -uroot -ppoloisbae  yelp_db < cosine.sql`
 
+Import the table business_cosine using:
+`mysql -uroot -ppoloisbae  yelp_db < index.sql`
 
+This table is used to determine which indices in the cosine vectors map to which businesses.
 
+Run `python app.py`
 
+Use postman to try a sample query: 
 
+Here is an example:
+
+[![Run in Postman](https://run.pstmn.io/button.svg)](https://app.getpostman.com/run-collection/0c4b7492254bd553ac5a)
