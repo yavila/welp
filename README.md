@@ -60,15 +60,16 @@ So far we've only trained on a subset of 100 restaurants.
 Import the table business_cosine with mappings from business id to cosine vectors using:
 `mysql -uroot -ppoloisbae  yelp_db < cosine.sql`
 
-Import the table business_cosine using:
+Import the table business_index using:
 `mysql -uroot -ppoloisbae  yelp_db < index.sql`
 
 This table is used to determine which indices in the cosine vectors map to which businesses.
 
 Run `python app.py`
 
-Use postman to try a sample query: 
+Use postman to try a sample query:
 
-Here is an example:
+Use this post data as json for example:
+[{"id": "-01XupAWZEXbdNbxNg5mEg"}]
 
 [![Run in Postman](https://run.pstmn.io/button.svg)](https://app.getpostman.com/run-collection/0c4b7492254bd553ac5a)

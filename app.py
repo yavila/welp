@@ -51,7 +51,7 @@ def rec():
 def get_recommendation(cosine_vector):
     cur = mysql.connection.cursor()
     res = np.argsort(cosine_vector).flatten()
-    top_indices = res[::-1][0:11] # TODO: filter out business_ids that were in the input
+    top_indices = res[::-1][1:11] # TODO: filter out business_ids that were in the input
     query = "select business.name, business.id from business join business_index on business.id = business_index.business_id where m_index in " + str(tuple(top_indices)) #idk if this works
     cur.execute(query)
     data = cur.fetchall()
