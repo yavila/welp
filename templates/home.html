@@ -2,31 +2,38 @@
 <head>
   <script src="https://cdnjs.cloudflare.com/ajax/libs/d3/4.13.0/d3.min.js"></script>
   <script src="https://code.jquery.com/jquery-3.3.1.min.js"></script>
+  <link href="https://fonts.googleapis.com/css?family=Open+Sans" rel="stylesheet">
   <style>
+    body {
+      font-family: 'Open Sans';
+    }
+
     .links line {
-      stroke: #999;
+      stroke: #777;
       stroke-opacity: 0.6;
     }
     
     .nodes circle {
-      stroke: #fff;
-      stroke-width: 1.5px;
+      stroke: #aaa;
+      stroke-width: 2px;
     }
   </style>
 </head>
 <body>
   <div id="container">
-    <svg width="960" height="600"></svg>
+    <svg width="1080" height="960"></svg>
   </div>
   <script>
+    let group = 0
     const data = {
       id: "0",
       restaurant: "Sweet Hut",
+      showLabel: true,
     }
 
     const graph = {
       nodes: [
-        data
+        Object.assign(data, { group })
       ],
       links: [],
     }
@@ -38,8 +45,13 @@
     const width = +svg.attr("width")
     const height = +svg.attr("height")
 
+    const simulationLinks = d3
+      .forceLink()
+      .id(d => d.id)
+      .distance(d => d.source.group === d.target.group ? 100 : 300)
+
     const simulation = d3.forceSimulation()
-      .force("link", d3.forceLink().id(d => d.id))//.distance(d => 150))
+      .force("link", simulationLinks)
       .force("charge", d3.forceManyBody())
       .force("center", d3.forceCenter(width / 2, height / 2))
 
@@ -52,46 +64,26 @@
 
     let linkElements, nodeElements, textElements
 
-    //const g = svg.append("g")
-    //let node = g.append("g").attr("stroke", "#fff").attr("stroke-width", 1.5).selectAll(".node")
-    //let link = g.append("g").attr("stroke", "#000").attr("stroke-width", 1.5).selectAll(".link")
-
     getNeighbors(0)
 
     function getNeighbors(sourceId) {
       const colors = ['#ffffcc','#ffeda0','#fed976','#feb24c','#fd8d3c','#fc4e2a','#e31a1c','#bd0026','#800026']
       $.get("/recommendation", data => {
+        const color = d3.scaleLinear().domain([0,group])
+          .interpolate(d3.interpolateHcl)
+          .range([d3.rgb("#FF5F5F"), d3.rgb('#FFF400')]);
         data.forEach(restaurant => {
-          links.push({ source: sourceId, target: restaurant.id, value: 5 })
-          nodes.push(restaurant)
+          nodes.forEach(node => {
+            if (node.id === sourceId) {
+              node.group = group
+              node.showLabel = true
+            }
+          })
+          links.push({ source: sourceId, target: restaurant.id })
+          nodes.push(Object.assign(restaurant, { group }))
         })
+        group++
 
-        console.log(nodes)
-        console.log(links)
-
-        //redrawGraph()
-        /*console.log(graph)
-        const link = linksContainer.selectAll("line")
-          .data(graph.links)
-          .enter().append("line")
-            .attr("stroke-width", d => 2)
-            .attr("fill", function(d) { return 'blue'; })
-
-        var node = svg.selectAll(".node")
-          .data(graph.nodes)
-        .enter().append("g")
-          .attr("class", "node")
-
-        node.append("circle")
-            .attr("r", 5)
-            .attr("fill", function(d) { return 'blue'; })
-            .on("click", d => getNeighbors(d.id))
-
-        node.append("text")
-          .attr("dx", 5)
-          .attr("dy", 5)
-          .text(function(d) { return d.restaurant; })*/
-        
         linkElements = linkGroup.selectAll("line").data(links, link => {
           return link.target.id + link.source.id
         })
@@ -105,15 +97,41 @@
         linkElements = linkEnter.merge(linkElements)
         
         nodeElements = nodeGroup.selectAll("circle").data(nodes, node => node.id)
+          .attr("fill", d => color(d.group))
 
         nodeElements.exit().remove()
 
         const nodeEnter = nodeElements.enter().append("circle")
-            .attr("r", 5)
-            .attr("fill", function(d) { return 'blue'; })
+            .attr("r", d => {
+              const distance = 20 - d.group * 2
+              return distance > 10 ? distance : 10
+            })
+            .attr("fill", d => color(d.group))
             .on("click", d => getNeighbors(d.id))
+            .on("mouseover", function(d) {
+              d3.select(this).style('stroke', '#788FFF')
+              d3.select(this).style('stroke-width', 5)
+            })
+            .on("mouseout", function(d) {
+              d3.select(this).style('stroke', undefined)
+              d3.select(this).style('stroke-width', undefined)
+            })
 
         nodeElements = nodeEnter.merge(nodeElements)
+
+        const labelNodes = nodes.filter(node => node.showLabel)
+        textElements = textGroup.selectAll("text").data(labelNodes, node => node.id)
+
+        textElements.exit().remove()
+
+        const textEnter = textElements.enter()
+          .append('text')
+          .text(function (node) { return node.restaurant })
+          .attr('font-size', 15)
+          .attr('dx', 22)
+          .attr('dy', 4)
+
+        textElements = textEnter.merge(textElements)
 
         simulation
           .nodes(nodes)
@@ -124,15 +142,17 @@
 
         simulation.alpha(1).restart()
         
-      function ticked() {
-        linkElements
-          .attr("x1", function(d) { return d.source.x; })
-          .attr("y1", function(d) { return d.source.y; })
-          .attr("x2", function(d) { return d.target.x; })
-          .attr("y2", function(d) { return d.target.y; });
-        nodeElements.attr('cx', node => node.x).attr('cy', node => node.y)
-      }
-
+        function ticked() {
+          linkElements
+            .attr("x1", function(d) { return d.source.x; })
+            .attr("y1", function(d) { return d.source.y; })
+            .attr("x2", function(d) { return d.target.x; })
+            .attr("y2", function(d) { return d.target.y; });
+          nodeElements.attr('cx', node => node.x).attr('cy', node => node.y)
+          textElements
+            .attr('x', function (node) { return node.x })
+            .attr('y', function (node) { return node.y })
+        }
       })
     }
     /*function redrawGraph() {
