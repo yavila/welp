@@ -27,9 +27,11 @@ def testDbConn():
 def rec():
     cur = mysql.connection.cursor()
     # Request data format:
-    # [{"id": business_id,...},{"id": business_id,...},{"id": business_id,...}]
+    # {sources: [{"id": business_id,...},{"id": business_id,...}, ] exclude:[{"id": business_id,...}]}
     data = request.get_json()
-    business_ids = map(lambda x: x['id'], data)
+    sources = data['sources']
+    exclude = data['exclude']
+    business_ids = map(lambda x: x['id'], sources)
     param = business_ids[0] #get this from post data BUT SQL INJECTION!
     # Check for SQL injection. Currently makes sure that input has no spaces
     # (any SQL query would have spaces)
@@ -50,6 +52,7 @@ def rec():
 
 def get_recommendation(cosine_vector):
     cur = mysql.connection.cursor()
+    print cosine_vector
     res = np.argsort(cosine_vector).flatten()
     top_indices = res[::-1][1:11] # TODO: filter out business_ids that were in the input
     query = "select business.name, business.id from business join business_index on business.id = business_index.business_id where m_index in " + str(tuple(top_indices)) #idk if this works
