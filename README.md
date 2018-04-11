@@ -56,7 +56,11 @@ Once downloaded use this command to import the data into the database (may take 
 `mysql -uroot -ppoloisbae db < yelp_db.sql`
 
 ### Recommendation Endpoint
-So far we've only trained on a subset of 100 restaurants.
+Download the cosine.sql and index.sql here which contains the result of training on 10605 restaurants:
+
+business_cosine: https://drive.google.com/file/d/1nyuksX9Ht942XfFJxM1gdNX24hUh2qCl/view?usp=sharing
+
+business_index: https://drive.google.com/file/d/1paildYInWCSlbIIt4Uvq0c0uX1R09Iox/view?usp=sharing
 
 Import the table business_cosine with mappings from business id to cosine vectors using:
 
