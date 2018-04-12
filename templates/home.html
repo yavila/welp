@@ -69,7 +69,7 @@
     function getNeighbors(sourceId) {
       const colors = ['#ffffcc','#ffeda0','#fed976','#feb24c','#fd8d3c','#fc4e2a','#e31a1c','#bd0026','#800026']
       $.ajax("/recommendation", {
-        data: JSON.stringify({ sources: [{ id: sourceId }] }),
+        data: JSON.stringify({ sources: [{ id: sourceId }], exclude: [] }),
         contentType: 'application/json',
         type: 'POST',
         success: res => {
