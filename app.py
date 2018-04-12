@@ -31,7 +31,10 @@ def rec():
     data = request.get_json()
     sources = data['sources']
     exclude = data['exclude']
-    business_ids = map(lambda x: x['id'], sources)
+    business_ids = map(lambda x: x['id'].encode("ascii"), sources)
+
+    exclude_business_ids = map(lambda x: x['id'].encode("ascii"), exclude)
+    print str(tuple(exclude_business_ids))
     param = business_ids[0] #get this from post data BUT SQL INJECTION!
     # Check for SQL injection. Currently makes sure that input has no spaces
     # (any SQL query would have spaces)
@@ -40,26 +43,29 @@ def rec():
         if (' ' in id):
             raise ValueError('SQL injection may have been attempted.');
     #TODO: change to actually get top 10 for everything and deal with overlaps
-    param = business_ids[0] # for now, just return top 10 for first one
-
-    query = "select cosine from business_cosine where business_id = '" + business_ids[0] + "'"
+    #TODO: dab on the penicillin
+    query = "select cosine from business_cosine where business_id in " + str(tuple(business_ids)) + ""
     cur.execute(query)
-    cosine_vector_str = cur.fetchone()
-    print type(cosine_vector_str[0])
-    cosine_vector = np.loads(cosine_vector_str[0])
-    result = get_recommendation(cosine_vector)
+    cosine_vector_str = cur.fetchall()
+    cosine_vectors = map(lambda x: np.loads(x[0]), cosine_vector_str)
+    cosine_vector = np.sum(cosine_vectors, axis=0)
+    print cosine_vector
+    result = get_recommendation(cosine_vector, exclude_business_ids)
     return jsonify(result)
 
-def get_recommendation(cosine_vector):
+def get_recommendation(cosine_vector, exclude_ids):
     cur = mysql.connection.cursor()
     print cosine_vector
     res = np.argsort(cosine_vector).flatten()
-    top_indices = res[::-1][1:11] # TODO: filter out business_ids that were in the input
+
+    top_indices = res[::-1][1:11] # TODO: filter out business_ids that were in the input / history
     query = "select business.name, business.id from business join business_index on business.id = business_index.business_id where m_index in " + str(tuple(top_indices)) #idk if this works
     cur.execute(query)
     data = cur.fetchall()
     data = map(lambda x: { "id": x[1], "name": x[0] }, data)
     return data
+
+
 
 if __name__ == '__main__':
     port = int(os.environ.get('PORT', 5000))
