@@ -26,8 +26,8 @@
   <script>
     let group = 0
     const data = {
-      id: "0",
-      restaurant: "Sweet Hut",
+      id: "-01XupAWZEXbdNbxNg5mEg",
+      name: "18 Degrees Neighborhood Grill",
       showLabel: true,
     }
 
@@ -64,94 +64,104 @@
 
     let linkElements, nodeElements, textElements
 
-    getNeighbors(0)
+    getNeighbors("-01XupAWZEXbdNbxNg5mEg")
 
     function getNeighbors(sourceId) {
       const colors = ['#ffffcc','#ffeda0','#fed976','#feb24c','#fd8d3c','#fc4e2a','#e31a1c','#bd0026','#800026']
-      $.get("/recommendation", data => {
-        const color = d3.scaleLinear().domain([0,group])
-          .interpolate(d3.interpolateHcl)
-          .range([d3.rgb("#FF5F5F"), d3.rgb('#FFF400')]);
-        data.forEach(restaurant => {
-          nodes.forEach(node => {
-            if (node.id === sourceId) {
-              node.group = group
-              node.showLabel = true
-            }
+      $.ajax("/recommendation", {
+        data: JSON.stringify({ sources: [{ id: sourceId }] }),
+        contentType: 'application/json',
+        type: 'POST',
+        success: res => {
+          const data = res.slice(1)
+          const color = d3.scaleLinear().domain([0,group])
+            .interpolate(d3.interpolateHcl)
+            .range([d3.rgb("#FF5F5F"), d3.rgb('#FFF400')]);
+          console.log(sourceId)
+          console.log(data)
+          console.log(data.slice(1))
+          data.forEach(restaurant => {
+            nodes.forEach(node => {
+              if (node.id === sourceId) {
+                node.group = group
+                node.showLabel = true
+              }
+            })
+            links.push({ source: sourceId, target: restaurant.id })
+            nodes.push(Object.assign(restaurant, { group }))
           })
-          links.push({ source: sourceId, target: restaurant.id })
-          nodes.push(Object.assign(restaurant, { group }))
-        })
-        group++
+          group++
 
-        linkElements = linkGroup.selectAll("line").data(links, link => {
-          return link.target.id + link.source.id
-        })
+          linkElements = linkGroup.selectAll("line").data(links, link => {
+            return link.target.id + link.source.id
+          })
 
-        linkElements.exit().remove()
+          linkElements.exit().remove()
 
-        const linkEnter = linkElements.enter().append("line")
-          .attr("stroke-width", d => 2)
-          .attr("fill", function(d) { return 'blue'; })
+          const linkEnter = linkElements.enter().append("line")
+            .attr("stroke-width", d => 2)
+            .attr("fill", function(d) { return 'blue'; })
 
-        linkElements = linkEnter.merge(linkElements)
-        
-        nodeElements = nodeGroup.selectAll("circle").data(nodes, node => node.id)
-          .attr("fill", d => color(d.group))
-
-        nodeElements.exit().remove()
-
-        const nodeEnter = nodeElements.enter().append("circle")
-            .attr("r", d => {
-              const distance = 20 - d.group * 2
-              return distance > 10 ? distance : 10
-            })
+          linkElements = linkEnter.merge(linkElements)
+          
+          nodeElements = nodeGroup.selectAll("circle").data(nodes, node => node.id)
             .attr("fill", d => color(d.group))
-            .on("click", d => getNeighbors(d.id))
-            .on("mouseover", function(d) {
-              d3.select(this).style('stroke', '#788FFF')
-              d3.select(this).style('stroke-width', 5)
-            })
-            .on("mouseout", function(d) {
-              d3.select(this).style('stroke', undefined)
-              d3.select(this).style('stroke-width', undefined)
-            })
 
-        nodeElements = nodeEnter.merge(nodeElements)
+          nodeElements.exit().remove()
 
-        const labelNodes = nodes.filter(node => node.showLabel)
-        textElements = textGroup.selectAll("text").data(labelNodes, node => node.id)
+          const nodeEnter = nodeElements.enter().append("circle")
+              .attr("r", d => {
+                const distance = 20 - d.group * 2
+                return distance > 10 ? distance : 10
+              })
+              .attr("fill", d => color(d.group))
+              .on("click", d => getNeighbors(d.id))
+              .on("mouseover", function(d) {
+                console.log(d)
+                d3.select(this).style('stroke', '#788FFF')
+                d3.select(this).style('stroke-width', 5)
+              })
+              .on("mouseout", function(d) {
+                d3.select(this).style('stroke', undefined)
+                d3.select(this).style('stroke-width', undefined)
+              })
 
-        textElements.exit().remove()
+          nodeElements = nodeEnter.merge(nodeElements)
 
-        const textEnter = textElements.enter()
-          .append('text')
-          .text(function (node) { return node.restaurant })
-          .attr('font-size', 15)
-          .attr('dx', 22)
-          .attr('dy', 4)
+          const labelNodes = nodes.filter(node => node.showLabel)
+          textElements = textGroup.selectAll("text").data(labelNodes, node => node.id)
 
-        textElements = textEnter.merge(textElements)
+          textElements.exit().remove()
 
-        simulation
-          .nodes(nodes)
-          .on("tick", ticked);
+          const textEnter = textElements.enter()
+            .append('text')
+            .text(function (node) { return node.name })
+            .attr('font-size', 15)
+            .attr('dx', 22)
+            .attr('dy', 4)
 
-        simulation.force("link")
-          .links(links)
+          textElements = textEnter.merge(textElements)
 
-        simulation.alpha(1).restart()
-        
-        function ticked() {
-          linkElements
-            .attr("x1", function(d) { return d.source.x; })
-            .attr("y1", function(d) { return d.source.y; })
-            .attr("x2", function(d) { return d.target.x; })
-            .attr("y2", function(d) { return d.target.y; });
-          nodeElements.attr('cx', node => node.x).attr('cy', node => node.y)
-          textElements
-            .attr('x', function (node) { return node.x })
-            .attr('y', function (node) { return node.y })
+          simulation
+            .nodes(nodes)
+            .on("tick", ticked);
+
+          simulation.force("link")
+            .links(links)
+
+          simulation.alpha(1).restart()
+          
+          function ticked() {
+            linkElements
+              .attr("x1", function(d) { return d.source.x; })
+              .attr("y1", function(d) { return d.source.y; })
+              .attr("x2", function(d) { return d.target.x; })
+              .attr("y2", function(d) { return d.target.y; });
+            nodeElements.attr('cx', node => node.x).attr('cy', node => node.y)
+            textElements
+              .attr('x', function (node) { return node.x })
+              .attr('y', function (node) { return node.y })
+          }
         }
       })
     }
