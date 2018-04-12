@@ -1,2 +1,5 @@
 venv
 .vscode
+cosine.sql
+index.sql
+tfidf.sql
