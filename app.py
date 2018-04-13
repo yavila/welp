@@ -9,13 +9,9 @@ import os
 
 app = Flask(__name__)
 # Allows us to connect to local database server
-app.config.update(
-  DEBUG=True,
-  TEMPLATES_AUTO_RELOAD=True,
-  MYSQL_USER='root',
-  MYSQL_PASSWORD='poloisbae',
-  MYSQL_DB='yelp_db'
-)
+app.config['MYSQL_USER'] = 'root'
+app.config['MYSQL_PASSWORD'] = 'poloisbae'
+app.config['MYSQL_DB'] = 'yelp_db'
 mysql = MySQL(app)
 
 @app.route('/')
@@ -27,42 +23,47 @@ def testDbConn():
     cur = mysql.connection.cursor()
     return 'success!'
 
+# Request data format:
+# {sources: [{"id": business_id,...},{"id": business_id,...}, ] exclude:[{"id": business_id,...}]}
 @app.route('/recommendation', methods=['POST'])
-def rec():
+def recommendation():
     cur = mysql.connection.cursor()
-    # Request data format:
-    # {sources: [{"id": business_id,...},{"id": business_id,...}, ] exclude:[{"id": business_id,...}]}
     data = request.get_json()
     sources = data['sources']
     exclude = data['exclude']
     business_ids = map(lambda x: x['id'].encode("ascii"), sources)
-
     exclude_business_ids = map(lambda x: x['id'].encode("ascii"), exclude)
-    print str(tuple(exclude_business_ids))
-    param = business_ids[0] #get this from post data BUT SQL INJECTION!
     # Check for SQL injection. Currently makes sure that input has no spaces
     # (any SQL query would have spaces)
     # TODO: put into separate function and perhaps expand on it
     for id in business_ids:
         if (' ' in id):
             raise ValueError('SQL injection may have been attempted.');
-    #TODO: change to actually get top 10 for everything and deal with overlaps
-    #TODO: dab on the penicillin
-    query = "select cosine from business_cosine where business_id in " + str(tuple(business_ids)) + ""
+
+    result = get_recommendation(business_ids, exclude_business_ids)
+    return jsonify(result)
+
+def get_recommendation(source_ids, exclude_ids):
+    cur = mysql.connection.cursor()
+    # get cosine vector
+    query = "select cosine from business_cosine where business_id in ('" + "','".join(map(str, source_ids)) + "')"
     cur.execute(query)
     cosine_vector_str = cur.fetchall()
     cosine_vectors = map(lambda x: np.loads(x[0]), cosine_vector_str)
     cosine_vector = np.sum(cosine_vectors, axis=0)
-    print cosine_vector
-    result = get_recommendation(cosine_vector, exclude_business_ids)
-    return jsonify(result)
 
-def get_recommendation(cosine_vector, exclude_ids):
-    cur = mysql.connection.cursor()
-    print cosine_vector
+    # filter out seen businesses and get top 10
     res = np.argsort(cosine_vector).flatten()
+    remove_ids = source_ids + exclude_ids
+    query = "select m_index from business_index where business_id in ('" + "','".join(map(str, remove_ids)) + "')"
+    cur.execute(query)
+    remove_indices = cur.fetchall()
+    remove_indices = np.array(remove_indices).flatten()
+    remove_idx = map(lambda x: np.where(res == x), remove_indices)
+    res = np.delete(res, remove_idx, axis=0)
+    top_indices = res[::-1][0:10]
 
-    top_indices = res[::-1][1:11] # TODO: filter out business_ids that were in the input / history
+    # return data
     query = "select business.name, business.id from business join business_index on business.id = business_index.business_id where m_index in " + str(tuple(top_indices)) #idk if this works
     cur.execute(query)
     data = cur.fetchall()
