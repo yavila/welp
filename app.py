@@ -4,6 +4,7 @@ from flask import Flask, render_template, request
 from flask_mysqldb import MySQL
 from flask import jsonify
 import numpy as np
+from urllib import unquote
 
 import os
 
@@ -33,9 +34,10 @@ def search():
     # TODO: return a suggested restaurant id based on a partial query
     # below from
     # https://stackoverflow.com/questions/24892035/python-flask-how-to-get-parameters-from-a-url
-    partial_name = request.args.get('name').encode("ascii")
+    partial_name = unquote(request.args.get('name'))
+    print(partial_name)
     cur = mysql.connection.cursor()
-    query = "select business.id, business.name from business join category on business.id = category.business_id where business.name like '%" + partial_name + "%' and category.category='Restaurants' and business.state='AZ' limit 20";
+    query = "select business.id, business.name from business join category on business.id = category.business_id where business.name like '%" + mysql.connection.escape_string(partial_name) + "%' and category.category='Restaurants' and business.state='AZ' limit 20";
     print query
     cur.execute(query)
     data = cur.fetchall()
