@@ -23,6 +23,22 @@ def testDbConn():
     cur = mysql.connection.cursor()
     return 'success!'
 
+
+@app.route('/search', methods=['GET'])
+def search():
+    # TODO: return a suggested restaurant id based on a partial query
+    # below from
+    # https://stackoverflow.com/questions/24892035/python-flask-how-to-get-parameters-from-a-url
+    partial_name = request.args.get('name').encode("ascii")
+    cur = mysql.connection.cursor()
+    query = "select business.id, business.name from business join category on business.id = category.business_id where business.name like '%" + partial_name + "%' and category.category='Restaurants' and business.state='AZ' limit 20";
+    print query
+    cur.execute(query)
+    data = cur.fetchall()
+    result = map(lambda x: { "id": x[1], "name": x[0] }, data)
+    # result = get_recommendation(business_ids, exclude_business_ids)
+    return jsonify(result)
+
 # Request data format:
 # {sources: [{"id": business_id,...},{"id": business_id,...}, ] exclude:[{"id": business_id,...}]}
 @app.route('/recommendation', methods=['POST'])
