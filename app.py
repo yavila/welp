@@ -9,9 +9,13 @@ import os
 
 app = Flask(__name__)
 # Allows us to connect to local database server
-app.config['MYSQL_USER'] = 'root'
-app.config['MYSQL_PASSWORD'] = 'poloisbae'
-app.config['MYSQL_DB'] = 'yelp_db'
+app.config.update(
+  DEBUG=True,
+  TEMPLATES_AUTO_RELOAD=True,
+  MYSQL_USER='root',
+  MYSQL_PASSWORD='poloisbae',
+  MYSQL_DB='yelp_db'
+)
 mysql = MySQL(app)
 
 @app.route('/')
