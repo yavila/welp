@@ -3,3 +3,4 @@ venv
 cosine.sql
 index.sql
 tfidf.sql
+*.pyc
