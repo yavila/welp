@@ -37,11 +37,10 @@ def search():
     partial_name = unquote(request.args.get('name'))
     print(partial_name)
     cur = mysql.connection.cursor()
-    query = "select business.id, business.name from business join category on business.id = category.business_id where business.name like '%" + mysql.connection.escape_string(partial_name) + "%' and category.category='Restaurants' and business.state='AZ' limit 20";
-    print query
+    query = "select business.id, business.name, business.stars, business.city, business.state from business join category on business.id = category.business_id where business.name like '%" + mysql.connection.escape_string(partial_name) + "%' and category.category='Restaurants' and business.state='AZ' limit 20"; print query
     cur.execute(query)
     data = cur.fetchall()
-    result = map(lambda x: { "id": x[1], "name": x[0] }, data)
+    result = map(lambda x: { "id": x[0], "name": x[1], "stars": x[2], "city": x[3], "state": x[4] }, data)
     # result = get_recommendation(business_ids, exclude_business_ids)
     return jsonify(result)
 

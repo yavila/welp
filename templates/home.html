@@ -2,8 +2,41 @@
 <head>
   <script src="https://cdnjs.cloudflare.com/ajax/libs/d3/4.13.0/d3.min.js"></script>
   <script src="https://code.jquery.com/jquery-3.3.1.min.js"></script>
-  <link href="https://fonts.googleapis.com/css?family=Open+Sans" rel="stylesheet">
+  <link href="https://fonts.googleapis.com/css?family=Open+Sans:400,300" rel="stylesheet">
+  <link rel="stylesheet" href="https://stackpath.bootstrapcdn.com/bootstrap/4.1.0/css/bootstrap.min.css" integrity="sha384-9gVQ4dYFwwWSjIDZnLEWnxCjeSWFphJiwGPXr1jddIhOegiu1FwO5qRGvFXOdJZ4" crossorigin="anonymous">
+  <link rel="stylesheet" href="http://maxcdn.bootstrapcdn.com/font-awesome/latest/css/font-awesome.min.css">
+  <link rel="stylesheet" href="/static/fontawesome-stars-o.css">
   <style>
+    html, body {
+      padding: 0;
+      margin: 0;
+      width: 100%;
+      height: 100%;
+      background-color: #efefef;
+      color: #333;
+      font-weight: 300;
+    }
+
+    #container {
+      display: flex;
+      justify-content: center;
+      padding: 20px;
+      margin: 0;
+      width: 100%;
+      height: 100%;
+    }
+
+    svg {
+      border: 1px solid #ddd;
+    }
+
+    #height-container {
+      display: flex;
+      justify-content: center;
+      width: 100%;
+      height: 780px;
+    }
+
     body {
       font-family: 'Open Sans';
     }
@@ -17,188 +50,154 @@
       stroke: #aaa;
       stroke-width: 2px;
     }
+
+    #left-panel {
+      width: 350px;
+      height: 100%;
+      /*border: 1px solid #ddd; */
+      box-shadow: 0 1px 3px rgba(0,0,0,0.12), 0 1px 2px rgba(0,0,0,0.24);
+      background-color: #fff;
+      border-radius: 5px;
+      overflow: hidden;
+    }
+
+    #right-panel {
+      width: 350px;
+      height: 100%;
+      /*border: 1px solid #ddd; */
+      box-shadow: 0 1px 3px rgba(0,0,0,0.12), 0 1px 2px rgba(0,0,0,0.24);
+      background-color: #fff;
+      border-radius: 5px;
+    }
+
+    #search-bar {
+      width: 100%;
+      height: 10%;
+      box-shadow: 0 1px 3px rgba(0,0,0,0.12), 0 1px 2px rgba(0,0,0,0.24);
+      display: flex;
+      align-content: center;
+      justify-content: center;
+      background-color: #ff4533;
+    }
+
+    #search-bar input {
+      width: 85%;
+      height: 50%;
+      margin-top: auto;
+      margin-bottom: auto;
+    }
+
+    #results-container {
+      height: 90%;
+      overflow-y: scroll;
+    }
+
+    svg {
+      background-color: #fff;
+      margin-left: 10px;
+      margin-right: 10px;
+      box-shadow: 0 1px 3px rgba(0,0,0,0.12), 0 1px 2px rgba(0,0,0,0.24);
+    }
+
+    .placeholder {
+      color: #aaa;
+    }
+
+    #search-placeholder {
+      width: 100%;
+      text-align: center;
+      padding-top: 20px;
+    }
+
+    .search-result {
+      width: 100%;
+      padding: 10px;
+      border-bottom: solid 1px #efefef;
+    }
+
+    .search-item-location {
+      color: #999;
+      font-size: 15px;
+    }
+
+    .search-item-name {
+      color: #444;
+      margin-bottom: 10px;
+      font-size: 17px;
+    }
+ 
   </style>
 </head>
 <body>
   <div id="container">
-    <svg width="720" height="600"></svg>
+    <div id="height-container">
+      <div id="left-panel">
+        <div id="search-bar">
+          <input type="text" class="form-control" placeholder="Search..">
+        </div>
+        <div id="results-container">
+        </div>
+      </div>
+      <svg width=800 height=780></svg>
+      <div id="right-panel">
+      </div>
+    </div>
   </div>
+  <script
+    src="https://code.jquery.com/jquery-3.3.1.min.js"
+    integrity="sha256-FgpCb/KJQlLNfOu91ta32o/NMZxltwRo8QtmkMRdAu8="
+    crossorigin="anonymous"></script>
+  <script src="/static/graph.js"></script>
+  <script src="/static/barrating.js"></script>
   <script>
-    let group = 0
-    const data = {
-      id: "-01XupAWZEXbdNbxNg5mEg",
-      name: "18 Degrees Neighborhood Grill",
-      showLabel: true,
-    }
+    $(document).ready(function() {
+      $('#search-bar input').keydown(function(event) {
+        if (event.keyCode == 13) {
+          $.ajax({
+            url: '/search',
+            type: 'get',
+            data: {
+              name: encodeURIComponent($(this).val()),
+            },
+            success: function(response) {
+              if (response && response.length) {
+                $('#results-container').html(
+                  response.map(({ id, name, stars, city, state }) => {
+                    return '<div class="search-result">'
+                      + '<div class="search-item-name">'+name+'</div>'
+                      + '<select class="rating" data-current-rating='+stars+' autocomplete="off">'
+                      + '<option value></option>'
+                      + '<option value="1">1</option>'
+                      + '<option value="2">2</option>'
+                      + '<option value="3">3</option>'
+                      + '<option value="4">4</option>'
+                      + '<option value="5">5</option>'
+                      + '</select>'
+                      + '<span class="search-item-location">'+city+', '+state+'</span>'
+                      + '</div>'
+                  }).join('')
+                ).promise().done(function(){
+                  $('.rating').each(function() {
+                    var rating = $(this).data('current-rating')
+                    console.log(rating)
+                    $(this).barrating({
+                      theme: 'fontawesome-stars-o',
+                      initialRating: rating,
+                      readonly: true,
+                    })
+                  })
+                })
 
-    const graph = {
-      nodes: [
-        Object.assign(data, { group })
-      ],
-      links: [],
-    }
-
-    let nodes = [data]
-    let links = []
-
-    const svg = d3.select("svg")
-    const width = +svg.attr("width")
-    const height = +svg.attr("height")
-
-    const simulationLinks = d3
-      .forceLink()
-      .id(d => d.id)
-      .distance(d => d.source.group === d.target.group ? 100 : 300)
-
-    const simulation = d3.forceSimulation()
-      .force("link", simulationLinks)
-      .force("charge", d3.forceManyBody())
-      .force("center", d3.forceCenter(width / 2, height / 2))
-
-    const linkGroup = svg.append("g")
-      .attr("class", "links")
-    const nodeGroup = svg.append("g")
-      .attr("class", "nodes")
-    const textGroup = svg.append("g")
-      .attr("class", "texts")
-
-    let linkElements, nodeElements, textElements
-
-    getNeighbors("-01XupAWZEXbdNbxNg5mEg")
-
-    function getNeighbors(sourceId) {
-      const colors = ['#ffffcc','#ffeda0','#fed976','#feb24c','#fd8d3c','#fc4e2a','#e31a1c','#bd0026','#800026']
-      $.ajax("/recommendation", {
-        data: JSON.stringify({ sources: [{ id: sourceId }], exclude: [] }),
-        contentType: 'application/json',
-        type: 'POST',
-        success: res => {
-          const data = res.slice(1)
-          const color = d3.scaleLinear().domain([0,group])
-            .interpolate(d3.interpolateHcl)
-            .range([d3.rgb("#FF5F5F"), d3.rgb('#FFF400')]);
-          console.log(sourceId)
-          console.log(data)
-          console.log(data.slice(1))
-          data.forEach(restaurant => {
-            nodes.forEach(node => {
-              if (node.id === sourceId) {
-                node.group = group
-                node.showLabel = true
+              } else {
+                $('#results-container').html(
+                  '<div id="search-placeholder" class="placeholder">No search results found</div>'
+                )
               }
-            })
-            links.push({ source: sourceId, target: restaurant.id })
-            nodes.push(Object.assign(restaurant, { group }))
+            }
           })
-          group++
-
-          linkElements = linkGroup.selectAll("line").data(links, link => {
-            return link.target.id + link.source.id
-          })
-
-          linkElements.exit().remove()
-
-          const linkEnter = linkElements.enter().append("line")
-            .attr("stroke-width", d => 2)
-            .attr("fill", function(d) { return 'blue'; })
-
-          linkElements = linkEnter.merge(linkElements)
-          
-          nodeElements = nodeGroup.selectAll("circle").data(nodes, node => node.id)
-            .attr("fill", d => color(d.group))
-
-          nodeElements.exit().remove()
-
-          const nodeEnter = nodeElements.enter().append("circle")
-              .attr("r", d => {
-                const distance = 20 - d.group * 2
-                return distance > 10 ? distance : 10
-              })
-              .attr("fill", d => color(d.group))
-              .on("click", d => getNeighbors(d.id))
-              .on("mouseover", function(d) {
-                console.log(d)
-                d3.select(this).style('stroke', '#788FFF')
-                d3.select(this).style('stroke-width', 5)
-              })
-              .on("mouseout", function(d) {
-                d3.select(this).style('stroke', undefined)
-                d3.select(this).style('stroke-width', undefined)
-              })
-
-          nodeElements = nodeEnter.merge(nodeElements)
-
-          const labelNodes = nodes.filter(node => node.showLabel)
-          textElements = textGroup.selectAll("text").data(labelNodes, node => node.id)
-
-          textElements.exit().remove()
-
-          const textEnter = textElements.enter()
-            .append('text')
-            .text(function (node) { return node.name })
-            .attr('font-size', 15)
-            .attr('dx', 22)
-            .attr('dy', 4)
-
-          textElements = textEnter.merge(textElements)
-
-          simulation
-            .nodes(nodes)
-            .on("tick", ticked);
-
-          simulation.force("link")
-            .links(links)
-
-          simulation.alpha(1).restart()
-          
-          function ticked() {
-            linkElements
-              .attr("x1", function(d) { return d.source.x; })
-              .attr("y1", function(d) { return d.source.y; })
-              .attr("x2", function(d) { return d.target.x; })
-              .attr("y2", function(d) { return d.target.y; });
-            nodeElements.attr('cx', node => node.x).attr('cy', node => node.y)
-            textElements
-              .attr('x', function (node) { return node.x })
-              .attr('y', function (node) { return node.y })
-          }
         }
       })
-    }
-    /*function redrawGraph() {
-      // Apply the general update pattern to the nodes.
-      node = node.data(graph.nodes, function(d) { return d })
-      node.exit().remove()
-      node = node
-        .enter()
-        .merge(node)
-        .append(g)
-        .attr("class", "node")
-      
-      node.append("circle")
-          .attr("fill", function(d) { return "blue"; })
-          .attr("r", 5)
-
-      node.append("text")
-          .attr("dx", 5)
-          .attr("dy", 5)
-          .text(function(d) { return d.restaurant; })
-      node.on("click", d => getNeighbors(d.id))
-
-      // Apply the general update pattern to the links.
-      if (graph.links) {
-        link = link.data(graph.links, function(d) { return d.source.id + "-" + d.target.id; });
-        link.exit().remove();
-        link = link.enter().append("line").merge(link);
-      }
-
-      // Update and restart the simulation.
-      simulation.nodes(graph.nodes);
-      simulation.force("link").links(graph.links);
-      simulation.alpha(1).restart();
-    }*/
-
-
+    })
   </script>
 </body>
 </html>
